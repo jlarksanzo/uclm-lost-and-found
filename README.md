@@ -1,78 +1,92 @@
 # UCLM Lost & Found — IT ELECT1
 
-## Ready for October 26, 2026
-Registration, login, logout, protected dashboard, SQLite persistence, hashed passwords, CSRF protection, validation, and request throttling. Lost/found reports and admin moderation are implemented in milestone 2 below. Ownership claims are future work. This is a classroom prototype, not an official university service. Email ownership and student status are not verified.
+Laravel 13 / PHP 8.3+ / Blade / SQLite. A student prototype for the University of Cebu Lapu-Lapu and Mandaue, not an official university service.
 
-## Run on this laptop
-Double-click START.cmd in this folder. Keep its window open. Visit http://127.0.0.1:8000. If the server is already running, simply visit the address. Press Ctrl+C in the server window to stop it.
+## Run on the original development laptop
+Double-click START.cmd and keep the terminal open. Open http://127.0.0.1:8000. START.cmd uses the local PHP runtime if available, otherwise PHP on your command path.
 
-## Run on another laptop
-Install PHP 8.3+ and Composer from their official websites. Enable curl, fileinfo, mbstring, openssl, pdo_sqlite, sqlite3, zip, dom and xml. From the project folder:
+## First setup on another laptop
+Install PHP 8.3+ and Composer. Enable the PHP extensions required by Composer, including pdo_sqlite, sqlite3, mbstring, fileinfo, openssl and curl. Open PowerShell in this project folder:
 
     composer install
-    copy .env.example .env
+    Copy-Item .env.example .env
     php artisan key:generate
-
-Create an empty database/database.sqlite file if it is missing, then run:
-
+    if (!(Test-Path database/database.sqlite)) { New-Item database/database.sqlite -ItemType File }
     php artisan migrate
     php artisan serve
 
-Use SQLite in .env. No npm build or MySQL server is needed for these Blade pages; styling is public/css/app.css. Do not use composer run dev for this milestone.
+Run the copy/key commands only for a fresh setup. Do not overwrite an existing .env or database. No npm build or MySQL server is needed for these Blade pages. Opening XAMPP alone does not start Laravel. Each laptop has its own database; GitHub shares code, not live accounts and reports.
 
-## Demonstration
-1. Open the registration form and create a fictional test account.
-2. Show the dashboard and account email.
-3. Log out and open /dashboard; it should redirect to login.
-4. Try a wrong password and show the error.
-5. Log in with the correct password.
-6. Log out, then attempt registration using the same email; show rejection.
-7. Show the group's real GitHub commits and explain each member's contribution.
+## After pulling updates
 
-## Group work and GitHub
-Create a repository named uclm-lost-and-found in your GitHub account. Add members under Settings > Collaborators. Initialize Git in this project folder only, then use the instructions GitHub displays to push it. Do not initialize Git in sources/ or the parent synced project folder.
+    composer install
+    php artisan migrate
+    php artisan view:clear
+    php artisan serve
 
-The included .gitignore excludes .env, vendor/, databases and local runtime files. Commit composer.lock. Never upload passwords, .env, database contents or work/runtime. Members should use their own GitHub accounts and commit work they actually completed. AI-generated starter code is not evidence of each student's individual work. Follow your instructor's AI-use rules.
+The October 27 migration preserves existing reports and puts their category in Other. Older returned reports remain returned; a historical handover record is not invented for them.
 
-Suggested tasks to divide based on group size: registration form and validation; login/logout and sessions; layout and dashboard; testing and documentation. Each member should review their code and be able to explain it.
+## Features
+- Registration, login, logout, protected pages and request limits.
+- Lost/found reports with category, description, location, date, and optional JPG/PNG/WebP photo up to 2 MB.
+- Browse approved items by keywords, lost/found type, and category.
+- My reports: open details, check status, and edit your own reports. Editing returns a report to pending review. Reports with pending/approved claims, or a completed return, cannot be edited.
+- Found-item claims: signed-in users submit private proof. A user cannot claim their own report. One claim per user per item; an approved claim blocks new claims.
+- My claims: see your proof, status, and admin review note. Proof is visible only to the claimant and admins, not to other students or the finder.
+- Admin review: approve/reject reports and claims. Claim review requires a note. Admins cannot review their own ownership claims. Only one claim can be approved per item.
+- Return recording: approval alone is not a physical return. After handover, an admin enters a note and confirms ownership verification. Found reports require an approved claim; lost reports are recorded as returned to their reporting user. Other pending claims close on return.
+- Admin return history records the item, recipient, handling admin, note and timestamp. Completed returns cannot be edited or recorded twice.
+- Updates: in-system notifications for new/edited reports (admins), new claims (admins), review decisions (affected user), and returns. Mark-all-read affects only your own notifications. No email or SMS is sent.
+- Possible matches appear in your report details. These use shared keywords, category and location from approved opposite-type reports. Suggestions are not ownership verification and do not use an external AI service.
 
-## Code map
-- routes/web.php: URLs and guest/auth middleware.
-- app/Http/Controllers/AuthController.php: registration, login and logout.
-- app/Models/User.php: allowed fields and automatic password hashing.
-- resources/views/auth/: login and registration forms.
-- resources/views/dashboard.blade.php: signed-in page.
-- public/css/app.css: responsive styling.
-- tests/Feature/AuthenticationTest.php: authentication checks.
-
-## Tests
-    php artisan test
-
-Latest result: 14 tests passed, 89 assertions, including the default Laravel tests. SQLite test data is kept in memory, separate from the demo database.
-
-## Learning references
-- https://www.youtube.com/watch?v=f1hCx-NXbek — instructor's Breeze/Blade tutorial.
-- https://www.youtube.com/watch?v=_LA9QsgJ0bw&t=726s — instructor's CRUD tutorial.
-- https://laravel.com/docs/13.x/authentication — framework authentication documentation.
-
-This starter uses Laravel 13 and built-in authentication with Blade. It does not reproduce the older Breeze tutorial step for step. Ask your instructor whether a specific Laravel version or exact tutorial implementation is required. The linked my_app sample has not been inspected.
-
-## Milestone 2 — Item reports and admin review
-Completed: authenticated browsing/search (item name or location), lost/found filter, report submission with an optional JPG/PNG/WebP photo up to 2 MB, My reports, admin approval/rejection, and marking approved reports as returned. Pending and rejected reports/photos are visible only to their owner or an admin. Approved reports are visible to signed-in users. Ownership claims and messaging are not implemented yet.
-
-Register a normal account first. To grant admin access, run from this folder:
+## Admin setup
+Register an account normally. Grant access from the project folder:
 
     php artisan app:make-admin your-registered-email@example.com
 
-On this laptop, if PHP is not on the command path, run in PowerShell:
+On the original laptop, if PHP is not on the command path:
 
     & ../../work/runtime/php/php.exe artisan app:make-admin your-registered-email@example.com
 
-Use the actual registered email, then refresh the dashboard. Admin navigation appears automatically. There is no preset admin password and no public role selector. To demonstrate review, submit a report, sign into the admin account, open Admin, approve it, then browse items. Mark returned only after the physical handover is verified. Rejected reports remain available in My reports; editing/resubmitting is future work.
+No preset admin credentials are provided. Students cannot select an admin role during registration. Admin > Reports / Claims / Return history opens the review tools.
 
-For other group laptops after pulling these changes:
+## Demo sequence
+1. Register a finder, an owner, and a separate admin account; grant only the admin access.
+2. As the finder, submit a found-item report with category and photo.
+3. As admin, approve the report.
+4. As the owner, browse the item and submit private proof.
+5. As admin, review the proof and approve the claim with a note.
+6. Verify the owner's Updates and My claims pages.
+7. Complete physical handover; as admin, open the item details, enter a note, confirm and record return.
+8. Verify Return history and that the item no longer appears in Browse.
+9. Separately test editing an unclaimed report and its return to pending review.
 
-    php artisan migrate
+Use fictional classroom data. Do not upload sensitive IDs, passwords, or private details in public descriptions/photos. Email ownership and student status are not verified in this prototype. The rules-based matching can miss matches or suggest unrelated items; admin verification is required.
 
-Photos are stored privately in storage/app/private/reports and served through an authenticated route; no storage link is needed. The local development server is for demonstrations on this laptop. Do not commit uploaded photos. Latest test result: 14 tests passed, 89 assertions.
+## Data and GitHub
+Commit source and composer.lock. Do not commit .env, vendor/, SQLite databases, runtime tools, uploaded photos, session files, or private proof. Uploaded photos are served through authenticated routes and are stored in storage/app/private/reports; no public storage link is needed. Back up the database and uploaded photos privately when transferring a demonstration.
 
+Each group member should use their own GitHub identity, commit work they actually completed, and explain it during progress checks. Treat this AI-assisted starter as the shared starting point. Follow your instructor's AI-use rules.
+
+## Code map
+- routes/web.php: authenticated routes.
+- app/Http/Controllers/AuthController.php: login, registration and logout.
+- app/Http/Controllers/ItemReportController.php: reports, filters, edits and moderation.
+- app/Http/Controllers/ClaimController.php: private claims, review, returns and history.
+- app/Http/Controllers/NotificationController.php: user notifications.
+- app/Models/ItemReport.php: report relationships, access and simple matching.
+- resources/views/: Blade pages; public/css/app.css: responsive styles.
+- database/migrations/: schema changes; tests/Feature/: workflow and access checks.
+
+## Validation
+
+    php artisan test
+
+Latest result: 23 tests passed, 167 assertions. Tests use a separate in-memory SQLite database.
+
+## References
+- Instructor login tutorial: https://www.youtube.com/watch?v=f1hCx-NXbek
+- Instructor CRUD tutorial: https://www.youtube.com/watch?v=_LA9QsgJ0bw&t=726s
+- Laravel authentication: https://laravel.com/docs/13.x/authentication
+
+This uses current Laravel authentication tools rather than reproducing the older Breeze tutorial step for step. The linked my_app reference has not been inspected.
